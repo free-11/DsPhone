@@ -208,8 +208,10 @@ async function main() {
     // 完整还原服务器：删除部署添加的一切，保留原有服务（nginx/mysql/ssh/java）。
     // 注意：DNS 也还原为阿里云内网 DNS（原样），外网域名解析会回到之前的状态。
     const code = await execStream(c, [
-      '# 1) 杀掉残留构建进程',
-      "pkill -f 'deepseek-harness' 2>/dev/null; pkill -f 'tsx' 2>/dev/null; pkill -f 'pnpm' 2>/dev/null; true",
+      '# 1) 杀残留进程 —— 注意：不要用 pkill -f 匹配本命令文本中的关键字',
+      '#    （如 deepseek-harness/pnpm），会误杀正在执行清理的 shell 自身；',
+      '#    服务器重启后本无残留进程，此项留空即可',
+      'true',
       '# 2) 删除 dsh-web systemd 服务（若存在）',
       'systemctl stop dsh-web 2>/dev/null; systemctl disable dsh-web 2>/dev/null; true',
       'rm -f /etc/systemd/system/dsh-web.service',
