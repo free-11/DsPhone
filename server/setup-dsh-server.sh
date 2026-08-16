@@ -27,6 +27,11 @@ log()  { printf '\033[1;34m[setup]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[setup:warn]\033[0m %s\n' "$*"; }
 die()  { printf '\033[1;31m[setup:error]\033[0m %s\n' "$*" >&2; exit 1; }
 
+# 小内存服务器（1-2G RAM）构建 DSH 时给 node 一个明确堆上限：太低会
+# "heap out of memory"，太高会把整机内存吃穿触发 OOM killer（这台机器可能
+# 还跑着 mysql 等服务）。3G 配合 swap 可在 2 核小机器上完成全量构建。
+export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=3072"
+
 [[ $EUID -eq 0 ]] || die "请用 root 运行: sudo bash setup-dsh-server.sh"
 
 # ---------- 0. 检测发行版 ----------
@@ -88,10 +93,14 @@ DNS_NAME="$(tailscale status --json | jq -r '.Self.DNSName' | sed 's/\.$//')"
 log "tailnet 主机名: $DNS_NAME"
 
 # ---------- 4. DSH 仓库 ----------
-if [[ ! -d "$REPO_DIR/.git" ]]; then
+# 已有源码（含 package.json，例如通过 deploy 工具直传）则跳过 clone——
+# 大陆服务器常无法直连 github.com，直传源码是可靠路径。
+if [[ ! -f "$REPO_DIR/package.json" ]]; then
   log "克隆 DeepSeek Harness -> $REPO_DIR"
   mkdir -p "$(dirname "$REPO_DIR")"
   git clone --depth 1 https://github.com/deepseek-ai/deepseek-harness.git "$REPO_DIR"
+else
+  log "检测到已有 DSH 源码于 $REPO_DIR，跳过 clone"
 fi
 
 id -u "$DSH_USER" >/dev/null 2>&1 \
@@ -100,6 +109,8 @@ mkdir -p "$DATA_DIR"
 chown -R "$DSH_USER":"$DSH_USER" "$REPO_DIR" "$DATA_DIR"
 
 log "安装依赖（pnpm install --frozen-lockfile）"
+# 大陆服务器可设 DSH_NPM_REGISTRY=https://registry.npmmirror.com 加速；为空则用 npm 默认源
+export npm_config_registry="${DSH_NPM_REGISTRY:-}"
 su -s /bin/bash "$DSH_USER" -c "cd '$REPO_DIR' && pnpm install --frozen-lockfile"
 if [[ "$BUILD" == "1" ]]; then
   log "生产构建（pnpm run build，首次约 5-15 分钟）"

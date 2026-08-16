@@ -27,9 +27,12 @@
 | `server/dsh-web.service` | systemd 服务模板（脚本自动填充） |
 | `server/README.md` | 服务器端操作手册（部署/验证/升级/日志/卸载） |
 | `pc/remote.ps1` | PC 端助手（测试连通性、打开地址） |
+| `tools/deploy-server.mjs` | SSH 部署助手（probe/prep/exec/upload/deploy/cleanup 六种模式，凭据走环境变量） |
+| `app-pwa/` | **DSH Remote 启动器**（纯 Web PWA，零原生代码）：扁平设计的移动端入口页，随 DSH 前端发布在 `/app/` |
+| `patches/dsh-frontend-mobile.patch` | DSH 前端移动端适配补丁（SW + 移动样式 + 启动器，可直接 `git apply`） |
 | `docs/phone-setup.md` | 手机端接入指南 |
 | `docs/implementation-plan.md` | 完整方案文档（调研结论、选型、备选方案） |
-| `docs/mobile-adaptation.md` | DSH 前端移动端适配说明（Service Worker + 移动端样式，改动已落入 DSH 仓库） |
+| `docs/mobile-adaptation.md` | DSH 前端移动端适配说明（改动已落入 DSH 仓库） |
 
 ## 快速开始（三步）
 

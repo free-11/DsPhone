@@ -11,6 +11,456 @@ index a14de72d40..6fed9b404b 100644
      <link rel="manifest" href="/manifest.webmanifest" />
      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
      <title>DeepSeek Harness</title>
+diff --git a/apps/web/public/app/css/style.css b/apps/web/public/app/css/style.css
+new file mode 100644
+index 0000000000..65bc1bad1a
+--- /dev/null
++++ b/apps/web/public/app/css/style.css
+@@ -0,0 +1,186 @@
++/* DSH Remote 启动器 — 扁平、克制的移动端工具页
++ * 设计规范: 单一强调色，无渐变，无毛玻璃；形状统一 10px；系统字体；
++ * 完整交互状态（连接中 / 错误 / 重试）；动效仅用于状态转换。 */
++:root {
++  --bg: #0f1115;
++  --panel: #17181c;
++  --border: #26282e;
++  --text: #f4f5f7;
++  --text-2: #9ba1ab;
++  --accent: #3964fe;
++  --accent-active: #2f56e8;
++  --danger: #ef4444;
++  --radius: 10px;
++  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
++    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
++  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
++}
++
++* { box-sizing: border-box; }
++
++html, body {
++  margin: 0;
++  min-height: 100%;
++  background: var(--bg);
++  color: var(--text);
++  font-family: var(--font);
++  -webkit-font-smoothing: antialiased;
++}
++
++.shell {
++  min-height: 100dvh;
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  justify-content: center;
++  gap: 24px;
++  padding: 32px 20px calc(32px + env(safe-area-inset-bottom, 0px));
++}
++
++/* 品牌区：小尺寸、左对齐、克制 */
++.brand {
++  width: min(400px, 100%);
++  display: flex;
++  flex-direction: column;
++  align-items: flex-start;
++  gap: 8px;
++}
++
++.mark {
++  border-radius: var(--radius);
++  margin-bottom: 4px;
++}
++
++.brand h1 {
++  margin: 0;
++  font-size: 22px;
++  font-weight: 600;
++  letter-spacing: -0.02em;
++  line-height: 1.2;
++}
++
++.lede {
++  margin: 0;
++  font-size: 14px;
++  color: var(--text-2);
++  line-height: 1.5;
++}
++
++/* 面板 */
++.view {
++  width: min(400px, 100%);
++  animation: rise 180ms ease-out both;
++}
++
++@keyframes rise {
++  from { opacity: 0; transform: translateY(6px); }
++  to { opacity: 1; transform: none; }
++}
++
++form {
++  border: 1px solid var(--border);
++  border-radius: var(--radius);
++  background: var(--panel);
++  padding: 20px;
++  display: flex;
++  flex-direction: column;
++  gap: 12px;
++}
++
++label {
++  font-size: 13px;
++  font-weight: 500;
++  color: var(--text-2);
++}
++
++.host {
++  padding: 12px 14px;
++  border: 1px solid var(--border);
++  border-radius: var(--radius);
++  background: var(--bg);
++  font-family: var(--mono);
++  font-size: 14px;
++  color: var(--text);
++  word-break: break-all;
++  min-height: 46px;
++  display: flex;
++  align-items: center;
++}
++
++button.primary {
++  min-height: 48px;
++  border: none;
++  border-radius: var(--radius);
++  background: var(--accent);
++  color: #fff;
++  font-family: var(--font);
++  font-size: 16px;
++  font-weight: 600;
++  cursor: pointer;
++  touch-action: manipulation;
++  transition: background 120ms ease;
++}
++
++button.primary:hover { background: var(--accent-active); }
++button.primary:active { transform: scale(0.98); background: var(--accent-active); }
++
++button:focus-visible,
++.host:focus-within {
++  outline: 2px solid var(--accent);
++  outline-offset: 2px;
++}
++
++.hint {
++  margin: 0;
++  font-size: 12px;
++  color: var(--text-2);
++  line-height: 1.5;
++}
++
++.error {
++  margin: 0;
++  font-size: 13px;
++  color: var(--danger);
++  line-height: 1.5;
++}
++
++/* 连接中：细进度条（状态转换反馈），非转圈 */
++.status {
++  margin: 0 0 14px;
++  font-size: 14px;
++  color: var(--text-2);
++  text-align: center;
++}
++
++.progress {
++  height: 2px;
++  border-radius: 1px;
++  background: var(--border);
++  overflow: hidden;
++}
++
++.progress span {
++  display: block;
++  height: 100%;
++  width: 40%;
++  background: var(--accent);
++  animation: slide 1.1s ease-in-out infinite;
++}
++
++@keyframes slide {
++  0% { transform: translateX(-100%); }
++  100% { transform: translateX(350%); }
++}
++
++.foot {
++  font-size: 11px;
++  color: var(--text-2);
++  opacity: 0.75;
++}
++
++@media (prefers-reduced-motion: reduce) {
++  .view { animation: none; }
++  .progress span { animation: none; transform: none; }
++  button.primary { transition: none; }
++  button.primary:active { transform: none; }
++}
+diff --git a/apps/web/public/app/icons/icon-192.png b/apps/web/public/app/icons/icon-192.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..f4ac996c9133770657062d80295eb0f0ae8ed9a1
+GIT binary patch
+literal 1817
+zcmdUw`#TeQ9LK+N8Am9mQn@5lk8(Z8_LR$LjLxAQm)tdnNN#no)iAfzwBr(r>P&Po
+zNvkA=4k|VZlT)E>E?ee4Mx14{o%u6*p7;CneqPV#c|M<?KF=o)?S;}%(@_HeXn43I
+zz2(`lX;rAadb8tH<N-<YM!5iLzut@-l%kzIodI}WxJ44KEa#ujy9Xu#p!s&w5JqB6
+zBmhvV2h!R1V%P$QMJi3vV_cBspjXi5B+}KmP@ASu&XLZ7{XgF*?s6-p#u_TSI`1MA
+zHIcs)_iMR*^i0l1m_4Ve@6Qn^<XY^wtp1v`&v@&klxyl~&cyjgW2bIK6ULZgZpw?A
+z6}b4)Vt>EAxVOQynt39#Hl}MUIH3v#e=NB`t<s}VvjO#o%mY^G8T_rU{^lohxKgu*
+zTr~`zec+L};N;+V_w?m;82Q!i99M6Ncwqa%%>IY0!FLlj2}|2&QkURkTHB04D$z&p
+zqQfbBNpMS)a6>SbQ!uYsj^q8CFr5EvQ3qLRItQrp)A7^cOe7KE{~7YFjx|NM4@6cT
+zVu7gMuyHqgKke6kBtc43F0Edpqhj@tCT-8WN<@YJ;PrS=lFp~>MOGTKfcDt>b=?FT
+ztt_YlP05I8$pY`vRBg4jI&a1UY<=*Bx-*8^n*+R}V(BEzs!?{i970<84zQ2bTF&-?
+zDj13r%Y<~?yoBs}j)K`ysC?<&Q4sNz-MCy;WS9-F-`bIEk-^Syh(m5WP6X;&80$Am
+z7$V45+nH&oU~3ct=!BVn;DhyA&J`|DOi)T~X8^M3?lVaFVWa8v@hMV!osYeC17!eG
+zzHCG*f}#fD77r%>+dwMaQZ>koNl>y|<}%b8^Q+scc*r719_TGK9zJ(k$oMWgFdU<U
+zZE+I@3^+zASd|o33WY=JaZ=;H@*`vVTfXG@f@-1aK_}_$wyT5`M%LQCU73$$wzH24
+z+oL9C^#yRWLl5Ykq#AL0g?DZQOOqLyvprDE!Gg+W-qU8h5Q<Z;xtR>;D0IKblNl=J
+zEZh%ThLp>UO%f&5I9@o8Rih1&#Ez^VPk7e%8J673v8Z(g=C3-{APolJ!F=)blXWt8
+zZqac(!QfM|X5|eYEOdj}8i9Bjsd#o(q=J%S<r_Vq1M9-V>WY-p%{;{FSB08CB#LjR
+z;D%IB4`p<Z2xal0VD1Y0d8I?Q61q#Yko%I_7A?ngcR5aOS80^qI9le&El^%KkOr_v
+zrcRwk;4mVy#OB+10}$U|r1{JWk3@mQc46cNOy2=-Ms~_@{8dFWtqj{PbH;OfDBe@A
+zXzeULyUbIC8GUOXzD<lKCAe!z{^TNq+QaX+78<MWLG0u?rP=aD4E#h_89SZadLGh%
+zm+*NTLPjFNDg7u1D<%sZnSnK+cDHQFG@64pI+pg8*gBS^eK7MdJ#lno<E5@ga{5M&
+zK+5zZf?A#S&}->3*jP&zvgy)$qFC?iVKJD07mM}dbK&o!culOPX!mQ1d4f+vVYs_j
+zL(Uj<)Te5;T)6qfj<B*(Wxz(<docvPw%O4~>|BJ}U?ovQR2&C!uQg`1Pmpx|ah>Ay
+zSn{Ao!*5+e-BkM!J@-h87x_dIA4?M(`j0@ZaMB>yfOS4hs&g#95?)%fmm@6~%cjg&
+zAn3azrc9?jkX9q+`qQ}q_rA}sSh8gfxDhB?rkp^jj_pbkG%_NX`6y|Y=t&dqGJe{p
+zBpyhMuk=Nid0UPOCWmeIuN9fR!6~JF8fu$G9oq=6i&G4s;VHUtHl9(E?vss>;o~LT
+zvv+cZbKQ0z)oGM_{!W%Kw#N=cB%*@!mVB)U4uL8Iy`(SJ1W)+|whR$w=xh`EQ&Tah
+zX3o3A;zS?vTf+W29lQqFor+qkND;GXmXy(5&D;Em;M{y^E}j7E@TzJ|%Da|ffOk<w
+zN9=l7?{gq-I%4E4d4&9!efKK02m)4(fV=SzC9#S)%xRtM>=`0|XTZbN3rTgsWd9E$
+CnImfe
+
+literal 0
+HcmV?d00001
+
+diff --git a/apps/web/public/app/icons/icon-512.png b/apps/web/public/app/icons/icon-512.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..d28b95e5070e8eca855eb7e79d402d1f8540ed35
+GIT binary patch
+literal 5216
+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
+Sz8?B22;LqW*H*aE(*6f@bBRF!
+
+literal 0
+HcmV?d00001
+
+diff --git a/apps/web/public/app/index.html b/apps/web/public/app/index.html
+new file mode 100644
+index 0000000000..5d4b0650be
+--- /dev/null
++++ b/apps/web/public/app/index.html
+@@ -0,0 +1,41 @@
++<!doctype html>
++<html lang="zh-CN">
++<head>
++  <meta charset="utf-8" />
++  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
++  <meta name="theme-color" content="#0f1115" />
++  <title>DSH Remote</title>
++  <link rel="manifest" href="manifest.webmanifest" />
++  <link rel="icon" type="image/png" href="icons/icon-192.png" />
++  <link rel="apple-touch-icon" href="icons/icon-192.png" />
++  <link rel="stylesheet" href="css/style.css" />
++</head>
++<body>
++  <main class="shell">
++    <header class="brand">
++      <img class="mark" src="icons/icon-192.png" alt="" width="44" height="44" />
++      <h1>DSH Remote</h1>
++      <p class="lede">远程连接 DeepSeek Harness</p>
++    </header>
++
++    <section class="view" id="form-view">
++      <form id="connect-form" autocomplete="off">
++        <label for="host">当前服务器</label>
++        <div class="host" id="host" title="当前服务器地址"></div>
++        <button type="submit" id="go" class="primary">连接</button>
++        <p class="hint">连接后进入 DeepSeek Harness 工作台</p>
++        <p class="error" id="error" hidden>无法连接服务器，请检查网络后重试</p>
++      </form>
++    </section>
++
++    <section class="view" id="connecting-view" hidden>
++      <p class="status">正在连接</p>
++      <div class="progress" aria-hidden="true"><span></span></div>
++    </section>
++
++    <footer class="foot">DSH Remote · v0.1.0</footer>
++  </main>
++
++  <script src="js/app.js"></script>
++</body>
++</html>
+diff --git a/apps/web/public/app/js/app.js b/apps/web/public/app/js/app.js
+new file mode 100644
+index 0000000000..dbece231ec
+--- /dev/null
++++ b/apps/web/public/app/js/app.js
+@@ -0,0 +1,50 @@
++/**
++ * DSH Remote 启动器逻辑：
++ * 本页由 DSH 服务器自身提供（/app/），与工作台同源。
++ * 连接 = 探测根路径可达后跳转到工作台（/）。
++ * 状态：就绪 → 连接中（进度条）→ 成功跳转 / 失败内联报错 + 重试。
++ */
++(function () {
++  'use strict'
++
++  // PWA 可安装性：注册根作用域 Service Worker（覆盖 /app/），失败不阻塞
++  if (window.isSecureContext && 'serviceWorker' in navigator) {
++    navigator.serviceWorker.register('/sw.js').catch(function () {})
++  }
++
++  var formView = document.getElementById('form-view')
++  var connectingView = document.getElementById('connecting-view')
++  var host = document.getElementById('host')
++  var form = document.getElementById('connect-form')
++  var error = document.getElementById('error')
++  var button = document.getElementById('go')
++
++  host.textContent = window.location.host
++
++  function setState(connecting) {
++    formView.hidden = connecting
++    connectingView.hidden = !connecting
++    error.hidden = true
++    if (!connecting) button.disabled = false
++  }
++
++  form.addEventListener('submit', function (e) {
++    e.preventDefault()
++    button.disabled = true
++    setState(true)
++    var controller = new AbortController()
++    var timer = setTimeout(function () { controller.abort() }, 8000)
++    fetch('/', { method: 'HEAD', cache: 'no-store', signal: controller.signal })
++      .then(function (r) {
++        clearTimeout(timer)
++        if (!r.ok) throw new Error('bad status ' + r.status)
++        window.location.href = '/'
++      })
++      .catch(function () {
++        clearTimeout(timer)
++        setState(false)
++        error.hidden = false
++        button.disabled = false
++      })
++  })
++})()
+diff --git a/apps/web/public/app/manifest.webmanifest b/apps/web/public/app/manifest.webmanifest
+new file mode 100644
+index 0000000000..c520337640
+--- /dev/null
++++ b/apps/web/public/app/manifest.webmanifest
+@@ -0,0 +1,29 @@
++{
++  "id": "/app/",
++  "name": "DSH Remote",
++  "short_name": "DSH",
++  "description": "DeepSeek Harness 手机远程控制入口",
++  "start_url": "/app/index.html",
++  "scope": "/app/",
++  "display": "standalone",
++  "background_color": "#0f1115",
++  "theme_color": "#0f1115",
++  "icons": [
++    {
++      "src": "icons/icon-192.png",
++      "sizes": "192x192",
++      "type": "image/png"
++    },
++    {
++      "src": "icons/icon-512.png",
++      "sizes": "512x512",
++      "type": "image/png"
++    },
++    {
++      "src": "icons/icon-512.png",
++      "sizes": "512x512",
++      "type": "image/png",
++      "purpose": "maskable"
++    }
++  ]
++}
 diff --git a/apps/web/public/sw.js b/apps/web/public/sw.js
 new file mode 100644
 index 0000000000..a5b18d18ab

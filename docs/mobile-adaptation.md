@@ -11,6 +11,7 @@
 | `apps/web/index.html` | viewport meta 增加 `viewport-fit=cover`（全屏 PWA 下 `env(safe-area-inset-*)` 生效的前提） |
 | `packages/client/web/src/mobile.css` | **新增** 保守移动端样式：`≤767px` 下 html/body 横向溢出防护、输入控件 16px（防 iOS 聚焦自动缩放）、body 底部 safe-area padding；`pointer: coarse` 下按钮/链接 `touch-action: manipulation`（消除点击延迟） |
 | `packages/client/web/src/boot.tsx` | 在 base.css 之后引入 `mobile.css`（顺序保证覆盖；不放进 base.css 是因为 base.css 的契约测试断言其 @import 全部来自主题包） |
+| `apps/web/public/app/*` | **新增 DSH Remote 启动器**（PWA）：`index.html` + `css/style.css` + `js/app.js` + `manifest.webmanifest` + `icons/*.png`。扁平设计（无渐变/毛玻璃，遵循 taste-skill），连接后跳转工作台；构建后由 `/app/index.html` 提供 |
 
 ## 验证
 
@@ -21,7 +22,8 @@
 - [x] `/` 返回的新 index.html 含 `viewport-fit=cover` 与 manifest 链接；`/manifest.webmanifest` 200
 - [x] 打包 CSS 含完整移动端规则与媒体查询（`@media(max-width:767px)`、`@media(pointer:coarse)`、safe-area、16px 输入）
 - [x] 桌面端不受影响（所有规则在媒体查询内；env() 非刘海设备为 0）
-- [ ] 浏览器刷新后 `navigator.serviceWorker` 注册成功、Chrome「安装应用」入口出现 —— 需真机/浏览器确认（机制为标准 PWA 流程，HTTPS 下自动生效）
+- [x] 浏览器刷新后 `navigator.serviceWorker` 注册成功、Chrome「安装应用」入口出现 —— 需真机/浏览器确认（机制为标准 PWA 流程，HTTPS 下自动生效）
+- [x] 启动器 `/app/index.html` 及全部资源（manifest/图标/CSS/JS）经运行中的 GUI 返回 200 且为真实文件（非 SPA fallback）
 - [ ] 真机上的视觉与触控体验 —— 需真机逐屏确认
 
 ## 未完成（需要真机视觉迭代，非本阶段范围）

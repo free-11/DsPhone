@@ -1,0 +1,186 @@
+/* DSH Remote 启动器 — 扁平、克制的移动端工具页
+ * 设计规范: 单一强调色，无渐变，无毛玻璃；形状统一 10px；系统字体；
+ * 完整交互状态（连接中 / 错误 / 重试）；动效仅用于状态转换。 */
+:root {
+  --bg: #0f1115;
+  --panel: #17181c;
+  --border: #26282e;
+  --text: #f4f5f7;
+  --text-2: #9ba1ab;
+  --accent: #3964fe;
+  --accent-active: #2f56e8;
+  --danger: #ef4444;
+  --radius: 10px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px 20px calc(32px + env(safe-area-inset-bottom, 0px));
+}
+
+/* 品牌区：小尺寸、左对齐、克制 */
+.brand {
+  width: min(400px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.mark {
+  border-radius: var(--radius);
+  margin-bottom: 4px;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.lede {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+/* 面板 */
+.view {
+  width: min(400px, 100%);
+  animation: rise 180ms ease-out both;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+form {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.host {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--text);
+  word-break: break-all;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+}
+
+button.primary {
+  min-height: 48px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 120ms ease;
+}
+
+button.primary:hover { background: var(--accent-active); }
+button.primary:active { transform: scale(0.98); background: var(--accent-active); }
+
+button:focus-visible,
+.host:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--danger);
+  line-height: 1.5;
+}
+
+/* 连接中：细进度条（状态转换反馈），非转圈 */
+.status {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--text-2);
+  text-align: center;
+}
+
+.progress {
+  height: 2px;
+  border-radius: 1px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: var(--accent);
+  animation: slide 1.1s ease-in-out infinite;
+}
+
+@keyframes slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+.foot {
+  font-size: 11px;
+  color: var(--text-2);
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view { animation: none; }
+  .progress span { animation: none; transform: none; }
+  button.primary { transition: none; }
+  button.primary:active { transform: none; }
+}

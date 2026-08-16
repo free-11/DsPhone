@@ -1,6 +1,9 @@
 # 个人配置（本机服务器地址等，不入库）
 pc/server.txt
 
+# 部署工具依赖
+tools/node_modules/
+
 # 日志与系统文件
 *.log
 .DS_Store
