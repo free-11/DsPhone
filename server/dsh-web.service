@@ -1,0 +1,29 @@
+# dsh-web.service — DeepSeek Harness Web GUI
+# 模板占位符由 setup-dsh-server.sh 填充: __REPO__ __USER__ __DATA_DIR__ __TRUSTED_HOST__
+[Unit]
+Description=DeepSeek Harness Web GUI (https://__TRUSTED_HOST__)
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+Group=__USER__
+WorkingDirectory=__REPO__
+# 在仓库目录内调用 corepack shim，corepack 会按 package.json 的
+# packageManager 字段自动使用 pnpm@11.7.0
+ExecStart=/usr/bin/env corepack pnpm dsh web --host 127.0.0.1 --trusted-host __TRUSTED_HOST__
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+# DSH 数据目录固定且对服务用户可写
+Environment=DSH_HOME=__DATA_DIR__
+# 加固
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+# 数据目录 + 仓库目录（corepack 缓存/可能的运行时写入）都需可写
+ReadWritePaths=__DATA_DIR__ __REPO__
+
+[Install]
+WantedBy=multi-user.target

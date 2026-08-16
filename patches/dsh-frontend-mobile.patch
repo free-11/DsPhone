@@ -1,0 +1,157 @@
+diff --git a/apps/web/index.html b/apps/web/index.html
+index a14de72d40..6fed9b404b 100644
+--- a/apps/web/index.html
++++ b/apps/web/index.html
+@@ -2,7 +2,7 @@
+ <html lang="zh-CN">
+   <head>
+     <meta charset="utf-8" />
+-    <meta name="viewport" content="width=device-width, initial-scale=1" />
++    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+     <link rel="manifest" href="/manifest.webmanifest" />
+     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+     <title>DeepSeek Harness</title>
+diff --git a/apps/web/public/sw.js b/apps/web/public/sw.js
+new file mode 100644
+index 0000000000..a5b18d18ab
+--- /dev/null
++++ b/apps/web/public/sw.js
+@@ -0,0 +1,67 @@
++/* DeepSeek Harness Service Worker
++ *
++ * Enables true PWA installability (Chrome requires a fetch-handling SW) and
++ * gives the shell a resilient static cache: hashed /assets are cache-first,
++ * navigations are network-first with a cached index.html fallback. RPC
++ * (/api) and the event stream are NEVER cached — this is a remote-control
++ * client, freshness of the live session always wins.
++ *
++ * Served from the dist root (apps/web/public/sw.js). Scope '/' — the SPA.
++ * Bump CACHE on every deploy of changed shell assets.
++ */
++const CACHE = 'dsh-shell-v1'
++const CACHEABLE = /^\/assets\//
++const NON_CACHEABLE = /^\/api\//
++
++self.addEventListener('install', (event) => {
++  self.skipWaiting()
++  // Best-effort precache of the SPA shell; never fail install on network hiccups.
++  event.waitUntil(
++    caches.open(CACHE).then((cache) => cache.addAll(['/'])).catch(() => {}),
++  )
++})
++
++self.addEventListener('activate', (event) => {
++  event.waitUntil((async () => {
++    const keys = await caches.keys()
++    await Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))
++    await self.clients.claim()
++  })())
++})
++
++self.addEventListener('fetch', (event) => {
++  const { request } = event
++  if (request.method !== 'GET') return
++  const url = new URL(request.url)
++  if (url.origin !== self.location.origin) return
++  if (NON_CACHEABLE.test(url.pathname)) return
++
++  if (request.mode === 'navigate') {
++    // Network-first: always prefer the live app; fall back to the cached shell.
++    event.respondWith((async () => {
++      try {
++        const fresh = await fetch(request)
++        const cache = await caches.open(CACHE)
++        cache.put('/index.html', fresh.clone())
++        return fresh
++      } catch {
++        const cached = (await caches.match('/index.html')) ?? (await caches.match('/'))
++        return cached ?? Response.error()
++      }
++    })())
++    return
++  }
++
++  // Hashed assets are immutable: cache-first. Other same-origin GETs pass through.
++  if (!CACHEABLE.test(url.pathname)) return
++  event.respondWith((async () => {
++    const cached = await caches.match(request)
++    if (cached) return cached
++    const fresh = await fetch(request)
++    if (fresh.ok) {
++      const cache = await caches.open(CACHE)
++      cache.put(request, fresh.clone())
++    }
++    return fresh
++  })())
++})
+\ No newline at end of file
+diff --git a/apps/web/src/main.ts b/apps/web/src/main.ts
+index feb85db15a..29e133ba11 100644
+--- a/apps/web/src/main.ts
++++ b/apps/web/src/main.ts
+@@ -8,3 +8,12 @@ import { AppWebEntry } from '@deepseek-ai/dsh-client-web'
+ const el = document.getElementById('root')
+ if (el === null) throw new Error('web app: missing #root')
+ void new AppWebEntry(el).run()
++
++// PWA: register the service worker (HTTPS only — Tailscale Serve / any TLS
++// gateway provides a secure context). Enables install-to-home-screen and a
++// resilient cached shell. Registration failure is non-fatal.
++if (window.isSecureContext && 'serviceWorker' in navigator) {
++  void navigator.serviceWorker.register('/sw.js').catch((reason) => {
++    console.warn('service worker registration failed', reason)
++  })
++}
+\ No newline at end of file
+diff --git a/packages/client/web/src/boot.tsx b/packages/client/web/src/boot.tsx
+index 7afc298767..5903515b14 100644
+--- a/packages/client/web/src/boot.tsx
++++ b/packages/client/web/src/boot.tsx
+@@ -46,6 +46,10 @@ import { AppRoot } from './AppRoot.tsx'
+ import { getStaticModules } from './seed.ts'
+ import { STATE_LABELS, createLoaderStatusStore, createSignal } from './loader-status.ts'
+ import './base.css'
++// Conservative mobile-only fixes (viewport overflow, iOS input zoom, safe-area
++// insets, touch latency). Imported after base.css so its rules win; inert on
++// desktop and non-notched devices.
++import './mobile.css'
+ 
+ /** Module transport hook the shell passes through (jsdom tests replace the <script> path). */
+ export type BootSeams = Pick<ClientModuleSystemOptions, 'loadBundle'>
+diff --git a/packages/client/web/src/mobile.css b/packages/client/web/src/mobile.css
+new file mode 100644
+index 0000000000..00abc058d2
+--- /dev/null
++++ b/packages/client/web/src/mobile.css
+@@ -0,0 +1,30 @@
++/* Mobile adaptation — conservative, additive rules for small screens.
++ * Component-level responsive layout (collapsible panes, drawers) lives in the
++ * owning plugin packages; this sheet only fixes hard mobile-breaking issues:
++ * viewport overflow, iOS input auto-zoom, notched-device safe areas, and tap
++ * latency on coarse pointers. Safe-area env() values are 0 on non-notched
++ * devices and on desktop, so these rules are inert there. */
++@media (max-width: 767px) {
++  html, body {
++    overflow-x: hidden;
++  }
++
++  /* iOS zooms into any input whose font-size is below 16px on focus; keep
++     the page steady while typing on a phone. */
++  input, textarea, select {
++    font-size: 16px;
++  }
++
++  /* Notched / gesture-bar phones: keep content clear of the home indicator
++     and screen edges (viewport-fit=cover must be set in the viewport meta). */
++  body {
++    padding-bottom: env(safe-area-inset-bottom, 0px);
++  }
++}
++
++/* Coarse pointers (touch) get instant tap response everywhere. */
++@media (pointer: coarse) {
++  button, a, [role='button'] {
++    touch-action: manipulation;
++  }
++}
+\ No newline at end of file
